@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import provider_card, empty %}
+{% block title %}Find providers - ServiceLink{% endblock %}
+{% block content %}
+<div class="page"><div class="container">
+  <div class="page-head"><div><h1>Find a provider</h1><p class="muted mb-0">{{ providers|length }} provider{{ '' if providers|length == 1 else 's' }} found</p></div></div>
+  <form class="card card-flat mb-form" method="get" action="{{ url_for('public.providers') }}" role="search">
+    <div class="grid g4">
+      <div class="field mb-0"><label for="q">Service or name</label><input class="input" id="q" name="q" value="{{ q }}" maxlength="60" placeholder="e.g. plumbing"></div>
+      <div class="field mb-0"><label for="family">Type</label><select class="select" id="family" name="family"><option value="">All types</option>
+        {% for k, label in families %}<option value="{{ k }}" {{ 'selected' if k == family }}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="field mb-0"><label for="area">Area</label><select class="select" id="area" name="area"><option value="">Anywhere</option>
+        {% for a in areas %}<option {{ 'selected' if a == area }}>{{ a }}</option>{% endfor %}</select></div>
+      <div class="field mb-0 align-end"><button class="btn btn-primary btn-block" type="submit">{{ icon('search') }} Search</button></div>
+    </div>
+  </form>
+  <div class="mt">
+  {% if providers %}<div class="grid g3">{% for p in providers %}{{ provider_card(p) }}{% endfor %}</div>
+  {% else %}<div class="card">{% call empty('search', 'No providers match yet', 'Try a different service or area, or post an open request.') %}<a class="btn btn-primary" href="{{ url_for('app.request_new') }}">Post an open request</a>{% endcall %}</div>{% endif %}
+  </div>
+</div></div>
+{% endblock %}

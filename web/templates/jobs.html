@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import job_row, empty with context %}
+{% block title %}Jobs - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid" data-live="30">
+  <div class="page-head"><h1>My jobs</h1></div>
+  <nav class="tabs" aria-label="Job status">
+    {% for key, label in (('active','Active'),('completed','Completed'),('cancelled','Cancelled')) %}<a href="{{ url_for('app.jobs_list', tab=key) }}" class="{{ 'active' if tab == key }}" {{ 'aria-current=page' if tab == key }}>{{ label }} <span class="badge b-muted">{{ counts[key] }}</span></a>{% endfor %}</nav>
+  <div class="card">{% if items %}<div class="stack">{% for j in items %}{{ job_row(j) }}{% endfor %}</div>
+    {% else %}{% call empty('briefcase', 'Nothing here yet', {'active': 'Jobs appear once a request is accepted.', 'completed': 'Finished jobs are listed here.', 'cancelled': 'Cancelled or abandoned jobs are listed here.'}[tab]) %}{% endcall %}{% endif %}</div>
+</div></div>
+{% endblock %}

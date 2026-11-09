@@ -1,0 +1,5 @@
+{% extends "admin/base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="container"><div class="page-head"><h1>Audit log</h1><p class="muted mb-0">Every admin action is recorded and cannot be edited here.</p></div>
+  <div class="card"><table class="t"><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Change</th><th>Reason</th></tr></thead><tbody>
+  {% for a in actions %}<tr><td>{{ a.created_at|dt }}</td><td>{{ a.admin_username }}</td><td>{{ a.action_type|replace('_',' ') }}</td><td>{{ a.target_type }} {{ a.target_id }}</td><td>{{ a.before_state }} &rarr; {{ a.after_state }}</td><td>{{ (a.reason or '')|truncate(90) }}</td></tr>{% endfor %}</tbody></table></div></div></div>{% endblock %}

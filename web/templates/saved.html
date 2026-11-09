@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% from "_macros.html" import provider_card, empty %}
+{% block title %}Saved providers - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="container"><div class="page-head"><h1>Saved providers</h1></div>
+  {% if providers %}<div class="grid g3">{% for p in providers %}{{ provider_card(p) }}{% endfor %}</div>
+  {% else %}<div class="card">{% call empty('heart', 'Nothing saved yet', 'Tap "Save provider" on a profile to keep them handy.') %}<a class="btn btn-primary" href="{{ url_for('public.providers') }}">Find providers</a>{% endcall %}</div>{% endif %}</div></div>
+{% endblock %}

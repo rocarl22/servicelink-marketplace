@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Complete your profile - ServiceLink{% endblock %}
+{% block content %}
+<div class="auth-wrap"><div class="narrow"><div class="card auth-card">
+  <h1>One last step</h1><p class="muted">Tell us a little about you{{ ' so clients can find you' if current_account.role == 'provider' }}.</p>
+  <form method="post" action="{{ url_for('auth.complete_profile') }}">{{ csrf() }}
+    <div class="field"><label for="display_name">{{ 'Business or display name' if current_account.role == 'provider' else 'Display name' }}</label>
+      <input class="input" id="display_name" name="display_name" value="{{ current_account.full_name }}" required maxlength="60"></div>
+    <div class="field"><label for="area">Your area</label><select class="select" id="area" name="area" required><option value="">Choose...</option>{% for a in areas %}<option>{{ a }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="bio">{{ 'About your work' if current_account.role == 'provider' else 'About you' }} <span class="muted">(optional)</span></label>
+      <textarea class="textarea" id="bio" name="bio" maxlength="500"></textarea><div class="hint">Phone numbers and emails are hidden automatically.</div></div>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Finish</button>
+  </form>
+</div></div></div>
+{% endblock %}

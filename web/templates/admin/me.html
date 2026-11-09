@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}{% from "_macros.html" import csrf %}
+{% block title %}My account{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="mid stack"><div class="page-head"><h1>My account</h1></div>
+  <div class="card"><dl class="kv"><dt>Username</dt><dd>{{ g.admin.username }}</dd><dt>Role</dt><dd>{{ g.admin.role }}</dd><dt>Two-step sign-in</dt><dd><span class="badge b-ok">On</span></dd></dl></div>
+  <div class="card"><h3>Change username</h3><form method="post" action="{{ url_for('admin.me_username') }}">{{ csrf() }}
+    <div class="grid g2"><div class="field"><label for="nu">New username</label><input class="input" id="nu" name="new_username" required minlength="3" maxlength="60" autocomplete="username"></div>
+      <div class="field"><label for="up">Your password</label><input class="input" id="up" name="password" type="password" autocomplete="current-password" required></div></div>
+    <button class="btn btn-primary" type="submit">Change username</button></form></div>
+  <div class="card"><h3>Change password</h3><form method="post" action="{{ url_for('admin.me_password') }}">{{ csrf() }}
+    <div class="field"><label for="cp">Current password</label><input class="input" id="cp" name="current_password" type="password" autocomplete="current-password" required></div>
+    <div class="grid g2"><div class="field"><label for="np">New password</label><input class="input" id="np" name="new_password" type="password" autocomplete="new-password" required minlength="12" maxlength="72"></div>
+      <div class="field"><label for="cf">Confirm</label><input class="input" id="cf" name="confirm_password" type="password" autocomplete="new-password" required maxlength="72"></div></div>
+    <button class="btn btn-primary" type="submit">Change password</button><p class="hint">You'll be signed out everywhere and asked to sign in again.</p></form></div>
+</div></div>{% endblock %}

@@ -1,0 +1,10 @@
+# Caddy gets and renews HTTPS certificates automatically.
+# 1) Point your domain's DNS at this server.  2) Replace the domain below.  3) caddy run --config deploy/Caddyfile
+servicelink.example.com {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8000
+}
+# Then run the app with:
+#   SERVICELINK_ENV=production
+#   SERVICELINK_ALLOWED_HOSTS=servicelink.example.com
+#   SERVICELINK_TRUSTED_PROXIES=127.0.0.1

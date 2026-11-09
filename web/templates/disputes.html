@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, state_badge, empty %}
+{% block title %}Dispute messages - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid"><div class="page-head"><h1>Dispute messages</h1></div>
+  {% for t in threads %}<section class="card mb-form" id="d{{ t.dispute_id }}">
+    <div class="row between"><div><h3 class="mb-0">{{ t.dispute_title }}</h3><div class="muted small">{{ t.job_category }} &middot; opened {{ t.dispute_created_at|dt('%d %b %Y') }}</div></div>
+      <span class="badge b-{{ 'warn' if t.dispute_status in ('open','under_review') else 'muted' }}">{{ t.dispute_status|replace('_',' ') }}</span></div>
+    <div class="chat mt">{% for m in t.messages %}<div class="msg {{ 'mine' if m.sender_role != 'admin' else '' }}">{{ m.body|nl2br }}{% for ev in m.evidence %}<div class="evidence">{% if ev.mime_type == 'application/pdf' %}<a href="/media/evidence/{{ ev.evidence_id }}" target="_blank" rel="noopener">{{ icon('file-text') }} Document (PDF)</a>{% else %}<a href="/media/evidence/{{ ev.evidence_id }}" target="_blank" rel="noopener"><img src="/media/evidence/{{ ev.evidence_id }}" alt="Attached photo" loading="lazy"></a>{% endif %}</div>{% endfor %}<time>{{ 'Administrator' if m.sender_role == 'admin' else 'You' }} &middot; {{ m.created_at|dt }}</time></div>{% endfor %}</div>
+    {% if t.resolution_note %}<p class="pill-note mt">Decision: {{ t.resolution_note }}</p>{% endif %}
+    {% if t.dispute_status in ('open','under_review') %}<form class="stack" method="post" action="{{ url_for('app.dispute_reply', dispute_id=t.dispute_id) }}" enctype="multipart/form-data">{{ csrf() }}
+      <div class="composer"><input class="input" name="body" maxlength="1000" placeholder="Reply to the administrator..." aria-label="Reply"><button class="btn btn-primary" type="submit">Send</button></div>
+      <label class="small muted">Attach a photo as evidence <span class="muted">(optional)</span> <input class="input" type="file" name="evidence" accept="image/jpeg,image/png,image/webp"></label></form>{% endif %}
+  </section>{% else %}<div class="card">{% call empty('shield-check', 'No dispute messages', 'If an administrator contacts you about a job, it appears here.') %}{% endcall %}</div>{% endfor %}
+</div></div>
+{% endblock %}

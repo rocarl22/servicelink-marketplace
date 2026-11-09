@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, avatar %}
+{% block title %}{{ other }} - Messages - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid">
+  <div class="row mb-form"><a class="btn btn-sm" href="{{ url_for('app.messages') }}">{{ icon('chevron-down') }} Back</a>{{ avatar(other, 'avatar-sm') }}<h1 class="h-md mb-0">{{ other }}</h1></div>
+  {% if open_dispute %}<div class="card card-bad mb-form"><strong class="ink">{{ icon('triangle-alert') }} A dispute is open on this job.</strong> <span class="small">An administrator will review it. <a href="{{ url_for('app.disputes_page') }}">See dispute messages</a></span></div>{% endif %}
+  {% for r in open_requests %}<div class="card card-accent mb-form"><div class="row between"><div><strong class="ink">{{ 'Request for you' if is_provider else 'Your request' }}: {{ r.category }}</strong><div class="small muted">{{ r.area }}{% if r.preferred_time %} &middot; {{ r.preferred_time }}{% endif %}</div><p class="mb-0 small">{{ r.description|nl2br }}</p></div>
+    {% if is_provider %}<div class="actions"><form method="post" action="{{ url_for('app.request_accept', request_id=r.request_id) }}">{{ csrf() }}<button class="btn btn-primary btn-sm" type="submit">Accept job</button></form>
+      <form method="post" action="{{ url_for('app.request_decline', request_id=r.request_id) }}" data-confirm="Decline this request?">{{ csrf() }}<button class="btn btn-sm" type="submit">Decline</button></form></div>
+    {% else %}<span class="badge b-info">Waiting for a reply</span>{% endif %}</div></div>{% endfor %}
+  <div class="card">
+    <div class="chat" role="log" aria-live="polite">
+      {% for m in msgs %}
+        {% if m.sender_role == 'system' %}<div class="msg sys">{{ m.body|nl2br }}</div>
+        {% else %}<div class="msg {{ 'mine' if m.sender_account_id == current_account.account_id }}">{{ m.body|nl2br }}<time>{{ m.created_at|dt('%d %b, %H:%M') }}</time></div>{% endif %}
+      {% else %}<p class="muted center">No messages yet.</p>{% endfor %}
+      <span id="end"></span>
+    </div>
+    {% if live %}<form class="composer" method="post" action="{{ url_for('app.thread', conversation_id=conv.conversation_id) }}">{{ csrf() }}
+      <input class="input" name="body" maxlength="2000" placeholder="Write a message..." aria-label="Message" autocomplete="off" required>
+      <button class="btn btn-primary" type="submit">Send</button></form>
+      <p class="hint">{{ icon('lock') }} Phone numbers, emails and links are hidden to keep you both safe.</p>
+    {% else %}<p class="pill-note mt mb-0">This chat is closed because there is no active request or job between you.</p>{% endif %}
+  </div></div></div>
+{% endblock %}

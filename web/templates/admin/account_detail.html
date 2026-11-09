@@ -1,0 +1,27 @@
+{% extends "admin/base.html" %}{% from "_macros.html" import csrf %}
+{% block title %}{{ a.full_name }}{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="container grid detail-grid">
+  <div class="stack">
+    <div class="card"><div class="row between"><h1 class="h-lg mb-0">{{ a.display_name or a.full_name }}</h1><span class="badge b-{{ 'ok' if a.account_status == 'active' else 'warn' }}">{{ a.account_status|replace('_',' ') }}</span></div>
+      <dl class="kv mt"><dt>Full name</dt><dd>{{ a.full_name }}</dd><dt>Type</dt><dd>{{ a.role }}</dd><dt>Phone</dt><dd>{{ a.phone }} {% if phone_verified %}<span class="badge b-ok">verified</span>{% else %}<span class="badge b-muted">not verified</span>{% endif %}</dd><dt>Email</dt><dd>{{ a.email or '-' }}</dd>
+        <dt>Area</dt><dd>{{ a.area or '-' }}</dd><dt>Joined</dt><dd>{{ a.created_at|dt('%d %b %Y') }}</dd><dt>Completed jobs</dt><dd>{{ a.completed_jobs }}</dd>
+        <dt>Cancelled jobs</dt><dd>{{ a.cancelled_jobs }}</dd><dt>Open reports</dt><dd>{{ a.open_reports }}</dd><dt>Open disputes</dt><dd>{{ a.open_disputes }}</dd></dl>
+      {% if a.bio %}<p class="mt mb-0">{{ a.bio|nl2br }}</p>{% endif %}</div>
+    <div class="card"><h3>Recent admin actions on this account</h3>
+      <table class="t"><thead><tr><th>When</th><th>Action</th><th>Reason</th></tr></thead><tbody>{% for r in a.recent_actions %}<tr><td>{{ r.created_at|dt }}</td><td>{{ r.action_type|replace('_',' ') }}</td><td>{{ (r.reason or '')|truncate(80) }}</td></tr>{% else %}<tr><td colspan="3" class="muted">None.</td></tr>{% endfor %}</tbody></table></div>
+  </div>
+  <aside class="stack">
+    {% if g.admin.role == 'admin' %}
+    <div class="card"><h3>Change status</h3><form method="post" action="{{ url_for('admin.account_status', account_id=a.account_id) }}">{{ csrf() }}
+      <div class="field"><label for="new_status">New status</label><select class="select" id="new_status" name="new_status">{% for s in statuses %}<option value="{{ s }}" {{ 'selected' if s == a.account_status }}>{{ s|replace('_',' ') }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="reason">Reason (recorded in the audit log)</label><textarea class="textarea" id="reason" name="reason" required minlength="10" maxlength="500"></textarea></div>
+      <div class="field"><label for="pw1">Your password</label><input class="input" id="pw1" name="admin_password" type="password" autocomplete="current-password" required></div>
+      <button class="btn btn-primary btn-block" type="submit">Update status</button></form></div>
+    <div class="card"><h3>Reset password</h3><p class="small muted">Creates a temporary password to give the user. Verify who they are first.</p>
+      <form method="post" action="{{ url_for('admin.account_reset', account_id=a.account_id) }}" data-confirm="Create a temporary password for this user?">{{ csrf() }}
+      <div class="field"><label for="reason2">Reason</label><input class="input" id="reason2" name="reason" required minlength="10" maxlength="500" placeholder="e.g. Identity checked by phone call"></div>
+      <div class="field"><label for="pw2">Your password</label><input class="input" id="pw2" name="admin_password" type="password" autocomplete="current-password" required></div>
+      <button class="btn btn-danger btn-block" type="submit">Create temporary password</button></form></div>
+    {% else %}<div class="card"><p class="muted mb-0">Support accounts can view accounts but not change them.</p></div>{% endif %}
+  </aside>
+</div></div>{% endblock %}

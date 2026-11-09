@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+# Local application data must not be committed to source control.
+data/*.db
+data/*.db-*
+data/backups/
+data/profile_photos/
+data/portfolio/
+data/dispute_evidence/
+data/icon_cache/
+data/*.log
+data/*.log.*
+
+# Extra safety: secrets, databases, binaries and logs anywhere in the repo
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.key
+*.pem
+*.priv
+*.exe
+*.log
+.DS_Store
+.pytest_cache/

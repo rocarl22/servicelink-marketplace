@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, empty %}
+{% block title %}Messages - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid"><div class="page-head"><h1>Messages</h1></div>
+  <div class="card">
+  {% if conversations %}<div class="stack">{% for c in conversations %}
+    <a class="convo" href="{{ url_for('app.thread', conversation_id=c.conversation_id) }}">{{ avatar(c.counterpart_name) }}
+      <div class="grow"><div class="row between"><strong class="ink">{{ c.counterpart_name }}</strong><span class="muted small">{{ c.last_message_at|ago }}</span></div>
+        <div class="muted small">{{ (c.last_message_preview or 'No messages yet')|truncate(90) }}</div></div>
+      {% if c.unread_count %}<span class="badge b-primary">{{ c.unread_count }}</span>{% endif %}</a>{% endfor %}</div>
+  {% else %}{% call empty('message-circle', 'No conversations yet', 'Chats start when you send or receive a request.') %}{% endcall %}{% endif %}
+  </div></div></div>
+{% endblock %}

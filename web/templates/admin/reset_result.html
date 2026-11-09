@@ -1,0 +1,8 @@
+{% extends "admin/base.html" %}
+{% block title %}Temporary password{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="mid"><div class="card stack">
+  <h1>Temporary password for {{ a.display_name or a.full_name }}</h1>
+  <p class="pill-note">Shown <strong>once</strong>. Give it to the user over the phone or in person, and tell them to change it under Settings right after signing in.</p>
+  <div class="keybox">{{ temp_password }}</div>
+  <a class="btn" href="{{ url_for('admin.account_detail', account_id=a.account_id) }}">Back to account</a>
+</div></div></div>{% endblock %}

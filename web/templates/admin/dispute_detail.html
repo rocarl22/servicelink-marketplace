@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}{% from "_macros.html" import csrf %}
+{% macro thread(title, msgs) %}<div class="card"><h3>{{ title }}</h3><div class="stack">{% for m in msgs %}<div class="msg {{ 'mine' if m.sender_role == 'admin' else '' }}">{{ m.body|nl2br }}{% for ev in m.evidence %}<div class="evidence">{% if ev.mime_type == 'application/pdf' %}<a href="{{ url_for('admin.evidence_file', evidence_id=ev.evidence_id) }}" target="_blank" rel="noopener">{{ icon('file-text') }} Document (PDF)</a>{% else %}<a href="{{ url_for('admin.evidence_file', evidence_id=ev.evidence_id) }}" target="_blank" rel="noopener"><img src="{{ url_for('admin.evidence_file', evidence_id=ev.evidence_id) }}" alt="Evidence photo" loading="lazy"></a>{% endif %}</div>{% endfor %}<time>{{ m.sender_role }} &middot; {{ m.created_at|dt }}</time></div>{% else %}<p class="muted mb-0">No messages yet.</p>{% endfor %}</div></div>{% endmacro %}
+{% block title %}Dispute #{{ ctx.dispute.dispute_id }}{% endblock %}
+{% block content %}{% set admin_nav = true %}{% set d = ctx.dispute %}<div class="page"><div class="container grid detail-grid">
+  <div class="stack">
+    <div class="card"><div class="row between"><h1 class="h-lg mb-0">{{ d.title }}</h1><span class="badge b-warn">{{ d.status|replace('_',' ') }}</span></div>
+      <p class="muted">Opened {{ d.created_at|dt }} by {{ 'an anonymous user' if d.is_anonymous else d.opener_name }} ({{ d.opener_role }})</p><p class="mb-0">{{ d.description|nl2br }}</p></div>
+    <div class="card"><h3>Job</h3><dl class="kv"><dt>Service</dt><dd>{{ ctx.job.category }} in {{ ctx.job.area }}</dd><dt>State</dt><dd>{{ ctx.job.current_state|replace('_',' ') }} (was {{ d.previous_state|replace('_',' ') }})</dd>
+      <dt>Client</dt><dd>{{ ctx.client.full_name }} &middot; {{ ctx.client.phone }}</dd><dt>Provider</dt><dd>{{ ctx.provider.full_name }} &middot; {{ ctx.provider.phone }}</dd><dt>Price</dt><dd>{{ ctx.job.agreed_price_text or '-' }}</dd></dl>
+      <ol class="timeline mt">{% for ev in ctx.events %}<li><strong class="ink">{{ ev.event_type|replace('_',' ')|capitalize }}</strong><div class="muted small">{{ ev.created_at|dt }}</div></li>{% endfor %}</ol></div>
+    {{ thread('Messages with the client', ctx.client_thread) }}{{ thread('Messages with the provider', ctx.provider_thread) }}
+  </div>
+  <aside class="stack">
+    <div class="card"><h3>Message the parties</h3><form method="post" action="{{ url_for('admin.dispute_message', dispute_id=d.dispute_id) }}">{{ csrf() }}
+      <div class="grid g2"><div class="field"><label for="target">To</label><select class="select" id="target" name="target"><option value="both">Both</option><option value="client">Client</option><option value="provider">Provider</option></select></div>
+        <div class="field"><label for="kind">Type</label><select class="select" id="kind" name="kind"><option value="question">Question</option><option value="recommendation">Recommendation</option><option value="note">Note</option></select></div></div>
+      <div class="field"><textarea class="textarea" name="body" required minlength="5" maxlength="1000" aria-label="Message"></textarea></div><button class="btn btn-primary btn-block" type="submit">Send</button></form></div>
+    <div class="card"><h3>Mark under review</h3><form method="post" action="{{ url_for('admin.dispute_hold', dispute_id=d.dispute_id) }}">{{ csrf() }}
+      <div class="field"><input class="input" name="reason" required minlength="10" maxlength="500" placeholder="Reason" aria-label="Reason"></div><button class="btn btn-block" type="submit">Mark under review</button></form></div>
+    {% if g.admin.role == 'admin' %}<div class="card"><h3>Resolve</h3><form method="post" action="{{ url_for('admin.dispute_resolve', dispute_id=d.dispute_id) }}" data-confirm="Resolve this dispute? The job state will change.">{{ csrf() }}
+      <div class="field"><label for="outcome">Outcome</label><select class="select" id="outcome" name="outcome"><option value="dismiss">Dismiss the dispute (job continues)</option><option value="cancel">Cancel the job</option><option value="complete">Mark the job complete</option></select></div>
+      <div class="field"><label for="rreason">Decision and reason</label><textarea class="textarea" id="rreason" name="reason" required minlength="10" maxlength="500"></textarea></div>
+      <div class="field"><label for="rpw">Your password</label><input class="input" id="rpw" name="admin_password" type="password" autocomplete="current-password" required></div>
+      <button class="btn btn-danger btn-block" type="submit">Resolve dispute</button></form></div>{% endif %}
+  </aside>
+</div></div>{% endblock %}

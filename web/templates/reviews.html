@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stars, empty %}
+{% block title %}Reviews - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid">
+  <div class="page-head"><h1>Reviews</h1></div>
+  <div class="card stat mb-form"><span class="ico">{{ icon('star') }}</span><div><b>{{ '%.1f'|format(avg or 0) }}</b><span>Average rating from {{ count }} review{{ '' if count == 1 else 's' }}</span></div></div>
+  <nav class="tabs"><a href="{{ url_for('app.reviews_page', tab='received') }}" class="{{ 'active' if tab == 'received' }}">Received</a><a href="{{ url_for('app.reviews_page', tab='given') }}" class="{{ 'active' if tab == 'given' }}">Given</a></nav>
+  <div class="card">{% if items %}<div class="list">{% for r in items %}<div>
+    <div class="row between"><div><strong class="ink">{{ r.reviewer_name if tab == 'received' else r.reviewee_name }}</strong> <span class="muted small">&middot; {{ r.job_category }}</span></div>{{ stars(r.stars) }}</div>
+    {% if r.comment %}<p class="mb-0 mt-sm">{{ r.comment|nl2br }}</p>{% endif %}<div class="small muted mt-sm">{{ r.created_at|ago }} &middot; <a href="{{ url_for('app.job_detail', job_id=r.job_id) }}">View job</a></div></div>{% endfor %}</div>
+  {% else %}{% call empty('star', 'No reviews yet', 'Reviews appear after a job is completed.') %}{% endcall %}{% endif %}</div>
+</div></div>
+{% endblock %}

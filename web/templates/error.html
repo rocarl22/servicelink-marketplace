@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<section class="errorpage"><div class="container"><div class="code">{{ code }}</div><h1>{{ title }}</h1><p class="muted">{{ message }}</p>
+<div class="row center mt"><a class="btn btn-primary" href="{{ url_for('public.landing') }}">Back to home</a></div></div></section>
+{% endblock %}

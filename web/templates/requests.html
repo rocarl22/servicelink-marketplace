@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, state_badge, empty %}
+{% block title %}My requests - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid">
+  <div class="page-head"><h1>My requests</h1><a class="btn btn-primary" href="{{ url_for('app.request_new') }}">{{ icon('plus') }} New request</a></div>
+  {% if items %}<div class="stack">{% for r in items %}
+    <div class="card"><div class="row between"><div><h3 class="mb-0">{{ r.category }}</h3>
+      <div class="muted small">{{ icon('map-pin') }} {{ r.area }}{% if r.preferred_time %} &middot; {{ r.preferred_time }}{% endif %} &middot; {{ r.created_at|ago }}</div></div>{{ state_badge(r.status) }}</div>
+      <p class="mt">{{ r.description|nl2br }}</p>
+      <div class="row between"><span class="muted small">{{ ('Sent to ' ~ r.provider_name) if r.provider_name else 'Open to matching providers' }}</span>
+        {% if r.status == 'open' %}<form method="post" action="{{ url_for('app.request_cancel', request_id=r.request_id) }}" data-confirm="Cancel this request?">{{ csrf() }}<button class="btn btn-sm btn-danger" type="submit">Cancel request</button></form>{% endif %}</div></div>{% endfor %}</div>
+  {% else %}<div class="card">{% call empty('search', 'No requests yet', 'Find a provider and send your first request.') %}<a class="btn btn-primary" href="{{ url_for('public.providers') }}">Find providers</a>{% endcall %}</div>{% endif %}
+</div></div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, avatar %}
+{% block title %}New request - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid">
+  <div class="page-head"><h1>{{ 'Request ' ~ (provider.display_name or provider.full_name) if provider else 'Post an open request' }}</h1></div>
+  <div class="card">
+    {% if provider %}<div class="row mb-form">{{ avatar(provider.display_name or provider.full_name) }}<div><strong class="ink">{{ provider.display_name or provider.full_name }}</strong><div class="muted small">{{ provider.area }}</div></div></div>
+    {% else %}<p class="pill-note">Open requests are shown to matching providers in your area. The first to accept gets the job.</p>{% endif %}
+    <form method="post" action="{{ url_for('app.request_new') }}">{{ csrf() }}
+      {% if provider %}<input type="hidden" name="provider" value="{{ provider.account_id }}">{% endif %}
+      <div class="grid g2"><div class="field"><label for="category">Service</label><select class="select" id="category" name="category" required><option value="">Choose...</option>
+          {% for c in cats %}<option {{ 'selected' if c == form.category }}>{{ c }}</option>{% endfor %}<option value="__custom__" {{ 'selected' if form.category == '__custom__' }}>Other (type your own)</option></select></div>
+        <div class="field"><label for="area">Where is the job?</label><select class="select" id="area" name="area" required>{% for a in areas %}<option {{ 'selected' if a == form.area }}>{{ a }}</option>{% endfor %}</select></div></div>
+      <div class="field {{ '' if form.category == '__custom__' else 'hide' }}" data-custom-service><label for="custom_category">Your service</label><input class="input" id="custom_category" name="custom_category" maxlength="60" value="{{ form.custom }}" placeholder="e.g. Sofa cleaning"></div>
+      <div class="field"><label for="description">What needs doing?</label><textarea class="textarea" id="description" name="description" required maxlength="1000" minlength="10"
+        placeholder="Describe the problem, any details, and anything the provider should bring."></textarea><div class="hint">Phone numbers and emails are hidden automatically - you'll chat inside ServiceLink.</div></div>
+      <div class="field"><label for="preferred_time">Preferred time <span class="muted">(optional)</span></label><input class="input" id="preferred_time" name="preferred_time" maxlength="80" placeholder="e.g. Tomorrow after 2pm"></div>
+      <div class="actions"><button class="btn btn-primary btn-lg" type="submit">Send request</button><a class="btn btn-lg" href="{{ url_for('public.providers') }}">Cancel</a></div>
+    </form></div>
+</div></div>
+{% endblock %}

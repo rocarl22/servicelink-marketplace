@@ -1,0 +1,7 @@
+{% extends "admin/base.html" %}
+{% block title %}Disputes{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="container"><div class="page-head"><h1>Open disputes</h1></div>
+  <div class="card"><table class="t"><thead><tr><th>#</th><th>Issue</th><th>Job</th><th>Opened by</th><th>Status</th><th>Updated</th></tr></thead><tbody>
+  {% for d in items %}<tr><td><a href="{{ url_for('admin.dispute_detail', dispute_id=d.dispute_id) }}">{{ d.dispute_id }}</a></td><td>{{ d.title }}</td><td>{{ d.job_category }} &middot; {{ d.job_area }}</td>
+    <td>{{ 'Anonymous' if d.is_anonymous else d.opener_name }} ({{ d.opener_role }})</td><td><span class="badge b-warn">{{ d.status|replace('_',' ') }}</span>{% if d.unread_party_messages %} <span class="badge b-primary">{{ d.unread_party_messages }} new</span>{% endif %}</td><td>{{ d.updated_at|ago }}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">No open disputes.</td></tr>{% endfor %}</tbody></table></div></div></div>{% endblock %}

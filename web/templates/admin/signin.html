@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}{% from "_macros.html" import csrf %}
+{% block title %}Sign in{% endblock %}
+{% block content %}<div class="auth-wrap"><div class="narrow"><div class="card auth-card">
+  <h1>Administrator sign-in</h1><p class="muted">Authorised staff only. You'll be asked for a code from your authenticator app next.</p>
+  <form method="post" action="{{ url_for('admin.signin') }}" novalidate>{{ csrf() }}
+    <div class="field"><label for="username">Username</label><input class="input" id="username" name="username" autocomplete="username" required autofocus maxlength="60"></div>
+    <div class="field"><label for="password">Password</label><div class="pw"><input class="input" id="password" name="password" type="password" autocomplete="current-password" required maxlength="128"><button type="button" data-toggle-password="password">Show</button></div></div>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Continue</button></form>
+</div></div></div>{% endblock %}

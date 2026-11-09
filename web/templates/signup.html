@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Create your account - ServiceLink{% endblock %}
+{% block content %}
+<div class="auth-wrap"><div class="narrow"><div class="card auth-card">
+  <h1>Create your account</h1><p class="muted">Join ServiceLink in about a minute.</p>
+  <form method="post" action="{{ url_for('auth.signup') }}" novalidate>{{ csrf() }}
+    <div class="field"><label>I want to</label>
+      <div class="seg">
+        <div><input type="radio" id="r-client" name="role" value="client" {{ 'checked' if form.role != 'provider' }}><label for="r-client"><strong>{{ icon('search') }} Find services</strong><span class="muted small">I'm a client</span></label></div>
+        <div><input type="radio" id="r-provider" name="role" value="provider" {{ 'checked' if form.role == 'provider' }}><label for="r-provider"><strong>{{ icon('briefcase') }} Offer services</strong><span class="muted small">I'm a provider</span></label></div>
+      </div></div>
+    <div class="field {{ '' if form.role == 'provider' else 'hide' }}" data-provider-only><label for="service_family">Type of services you provide</label>
+      <select class="select" id="service_family" name="service_family"><option value="">Choose...</option>
+        {% for k, label in families %}<option value="{{ k }}" {{ 'selected' if form.service_family == k }}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="full_name">Full name</label><input class="input" id="full_name" name="full_name" value="{{ form.full_name or '' }}" autocomplete="name" required maxlength="80"></div>
+    <div class="field"><label for="phone">Phone number</label><input class="input" id="phone" name="phone" value="{{ form.phone or '' }}" inputmode="tel" autocomplete="tel" placeholder="0712 345 678" required>
+      <div class="hint">Kenyan number. It stays private and is used to sign in.</div></div>
+    <div class="field"><label for="email">Email <span class="muted">(optional)</span></label><input class="input" id="email" name="email" type="email" value="{{ form.email or '' }}" autocomplete="email" maxlength="120"></div>
+    <div class="field"><label for="password">Password</label><div class="pw"><input class="input" id="password" name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="72" data-meter><button type="button" data-toggle-password="password">Show</button></div>
+      <button type="button" class="btn btn-sm btn-ghost suggest" data-suggest="password,password_confirm">Suggest a strong password</button><div class="hint">At least 12 characters. A short phrase of unrelated words works well, e.g. <em>blue-giraffe-sings-loud</em>.</div></div>
+    <div class="field"><label for="password_confirm">Confirm password</label><input class="input" id="password_confirm" name="password_confirm" type="password" autocomplete="new-password" required maxlength="72"></div>
+    <div class="field"><label class="check"><input type="checkbox" name="terms" value="1" required><span>I agree to the <a href="{{ url_for('public.legal') }}" target="_blank" rel="noopener">Terms &amp; privacy</a>.</span></label></div>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Create account</button>
+  </form>
+  <div class="divider"></div><p class="center mb-0 muted">Already have an account? <a href="{{ url_for('auth.signin') }}">Sign in</a></p>
+</div></div></div>
+{% endblock %}

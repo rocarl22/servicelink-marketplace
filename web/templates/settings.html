@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, empty, person %}
+{% block title %}Settings - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid stack">
+  <div class="page-head"><h1>Settings</h1></div>
+  <nav class="tabs" aria-label="Settings sections"><a href="#profile">Profile</a><a href="#security">Security</a>{% if current_account.role == 'provider' %}<a href="#services">Services</a><a href="#portfolio">Portfolio</a>{% endif %}<a href="#blocked">Blocked</a><a href="#data">Your data</a></nav>
+
+  <div class="grid g4"><div class="card stat"><span class="ico">{{ icon('circle-check') }}</span><div><b>{{ summary.completed_jobs }}</b><span>Completed</span></div></div>
+    <div class="card stat"><span class="ico">{{ icon('briefcase') }}</span><div><b>{{ summary.active_jobs }}</b><span>Active</span></div></div>
+    <div class="card stat"><span class="ico">{{ icon('x') }}</span><div><b>{{ summary.cancelled_jobs }}</b><span>Cancelled</span></div></div>
+    <a class="card stat" href="{{ url_for('app.reviews_page') }}"><span class="ico">{{ icon('star') }}</span><div><b>{{ '%.1f'|format(summary.avg_stars or 0) }}</b><span>{{ summary.review_count }} review{{ '' if summary.review_count == 1 else 's' }}</span></div></a></div>
+  <section class="card" id="profile"><h3>Profile</h3>
+    <div class="row mb-form">{{ person(current_account.account_id, current_account.display_name or current_account.full_name, current_account.work_photo_path, 'avatar-lg') }}
+      <div class="grow"><strong class="ink">Profile photo</strong>
+        <form method="post" action="{{ url_for('media.photo_set') }}" enctype="multipart/form-data" class="row mt-sm">{{ csrf() }}
+          <input class="input grow" type="file" name="photo" accept="image/jpeg,image/png,image/webp" required aria-label="Choose a photo"><button class="btn btn-sm" type="submit">Upload</button></form>
+        {% if current_account.work_photo_path %}<form method="post" action="{{ url_for('media.photo_remove') }}" data-confirm="Remove your profile photo?">{{ csrf() }}<button class="btn btn-sm btn-danger mt-sm" type="submit">Remove photo</button></form>{% endif %}
+        <div class="hint">JPG, PNG or WebP up to 12 MB. Location data is removed automatically.</div></div></div>
+    <form method="post" action="{{ url_for('app.settings_profile') }}">{{ csrf() }}
+      <div class="grid g2"><div class="field"><label for="display_name">Display name</label><input class="input" id="display_name" name="display_name" value="{{ current_account.display_name }}" maxlength="60" required></div>
+        <div class="field"><label for="area">Area</label><select class="select" id="area" name="area">{% for a in areas %}<option {{ 'selected' if a == current_account.area }}>{{ a }}</option>{% endfor %}</select></div></div>
+      <div class="field"><label for="bio">About</label><textarea class="textarea" id="bio" name="bio" maxlength="500">{{ current_account.bio }}</textarea></div>
+      <dl class="kv small"><dt>Phone</dt><dd>{{ current_account.phone_display }} {% if current_account.phone_verified_at %}<span class="badge b-ok">verified</span>{% else %}<a class="badge b-warn" href="{{ url_for('auth.verify_phone') }}">not verified - verify now</a>{% endif %}</dd><dt>Account type</dt><dd>{{ current_account.role|capitalize }}</dd></dl>
+      <button class="btn btn-primary mt" type="submit">Save changes</button></form></section>
+
+  <section class="card" id="security"><h3>Change password</h3>
+    <form method="post" action="{{ url_for('app.settings_password') }}">{{ csrf() }}
+      <div class="field"><label for="current_password">Current password</label><input class="input" id="current_password" name="current_password" type="password" autocomplete="current-password" required maxlength="128"></div>
+      <div class="grid g2"><div class="field"><label for="new_password">New password</label><input class="input" id="new_password" name="new_password" type="password" autocomplete="new-password" required minlength="12" maxlength="72" data-meter><button type="button" class="btn btn-sm btn-ghost suggest" data-suggest="new_password,confirm_password">Suggest a strong password</button><div class="hint">At least 12 characters.</div></div>
+        <div class="field"><label for="confirm_password">Confirm new password</label><input class="input" id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required maxlength="72"></div></div>
+      <button class="btn btn-primary" type="submit">Update password</button>
+      <p class="hint">Changing your password signs you out of all other devices.</p></form>
+    <div class="divider"></div>
+    <div class="row between"><h3 class="mb-0">Where you're signed in</h3>
+      {% if sessions|length > 1 %}<form method="post" action="{{ url_for('app.sessions_revoke_others') }}" data-confirm="Sign out of all other devices?">{{ csrf() }}<button class="btn btn-sm btn-danger" type="submit">Sign out other devices</button></form>{% endif %}</div>
+    <table class="t mt"><thead><tr><th>Device</th><th>Last active</th><th></th></tr></thead><tbody>
+      {% for s in sessions %}<tr><td>{{ (s.user_agent or 'Unknown device')|truncate(48) }}<div class="muted small">{{ s.ip }}</div></td><td>{{ s.last_seen_at|ago }}</td>
+        <td>{% if s.session_hash == current_hash %}<span class="badge b-ok">This device</span>
+          {% else %}<form method="post" action="{{ url_for('app.sessions_revoke') }}">{{ csrf() }}<input type="hidden" name="session" value="{{ s.session_hash }}"><button class="btn btn-sm" type="submit">Sign out</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></section>
+
+  {% if current_account.role == 'provider' %}
+  <section class="card" id="services"><h3>Your services</h3>
+    {% if services %}<div class="list">{% for s in services %}<div class="row between"><div><strong class="ink">{{ s.title }}</strong> <span class="badge b-primary">{{ s.category }}</span> {% if not s.active %}<span class="badge b-muted">Hidden</span>{% endif %}
+      <div class="muted small">{{ s.rate_text or 'No rate listed' }}</div></div>
+      <div class="actions"><details class="inline-edit"><summary class="btn btn-sm">Edit</summary>
+        <form method="post" action="{{ url_for('app.service_edit', service_id=s.service_id) }}" class="card card-flat edit-pop">{{ csrf() }}
+          <div class="field"><label>Title</label><input class="input" name="title" value="{{ s.title }}" maxlength="80" required></div>
+          <div class="field"><label>Rate</label><input class="input" name="rate_text" value="{{ s.rate_text }}" maxlength="60"></div>
+          <div class="field"><label>Description</label><input class="input" name="description" value="{{ s.description }}" maxlength="300"></div>
+          <button class="btn btn-primary btn-sm" type="submit">Save</button></form></details>
+        <form method="post" action="{{ url_for('app.service_toggle', service_id=s.service_id) }}">{{ csrf() }}<button class="btn btn-sm" type="submit">{{ 'Hide' if s.active else 'Show' }}</button></form>
+        <form method="post" action="{{ url_for('app.service_delete', service_id=s.service_id) }}" data-confirm="Remove this service?">{{ csrf() }}<button class="btn btn-sm btn-danger" type="submit">Remove</button></form></div></div>{% endfor %}</div>
+    {% else %}<p class="muted">Add at least one service so clients can find you.</p>{% endif %}
+    <div class="divider"></div><h3>Add a service</h3>
+    <form method="post" action="{{ url_for('app.service_add') }}">{{ csrf() }}
+      <div class="grid g2"><div class="field"><label for="s-cat">Category</label><select class="select" id="s-cat" name="category" required>{% for c in cats %}<option>{{ c }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="s-title">Title</label><input class="input" id="s-title" name="title" maxlength="80" required placeholder="e.g. Leak repairs"></div></div>
+      <div class="grid g2"><div class="field"><label for="s-rate">Rate <span class="muted">(optional)</span></label><input class="input" id="s-rate" name="rate_text" maxlength="60" placeholder="e.g. From KSh 1,500"></div>
+        <div class="field"><label for="s-desc">Description <span class="muted">(optional)</span></label><input class="input" id="s-desc" name="description" maxlength="300"></div></div>
+      <button class="btn btn-primary" type="submit">{{ icon('plus') }} Add service</button></form></section>
+  {% endif %}
+
+  {% if current_account.role == 'provider' %}<section class="card" id="portfolio"><h3>Work samples</h3>
+    <p class="muted small">Show clients your best work. Photos with people's faces are rejected to protect their privacy.</p>
+    {% if portfolio %}<div class="gallery">{% for it in portfolio %}<figure>
+      <img src="/media/portfolio/{{ it.item_id }}" alt="{{ it.title }}" loading="lazy">
+      <figcaption><strong class="ink">{{ it.title }}</strong> {% if not it.visible %}<span class="badge b-muted">Hidden</span>{% endif %}
+        <div class="actions mt-sm"><details class="inline-edit"><summary class="btn btn-sm">Edit</summary>
+          <form method="post" action="{{ url_for('media.portfolio_edit', item_id=it.item_id) }}" class="card card-flat edit-pop">{{ csrf() }}
+            <div class="field"><label>Title</label><input class="input" name="title" value="{{ it.title }}" maxlength="60" required></div>
+            <div class="field"><label>Description</label><input class="input" name="description" value="{{ it.description }}" maxlength="300"></div>
+            <button class="btn btn-primary btn-sm" type="submit">Save</button></form></details>
+          <form method="post" action="{{ url_for('media.portfolio_toggle', item_id=it.item_id) }}">{{ csrf() }}<button class="btn btn-sm" type="submit">{{ 'Show' if not it.visible else 'Hide' }}</button></form>
+          <form method="post" action="{{ url_for('media.portfolio_delete', item_id=it.item_id) }}" data-confirm="Delete this photo?">{{ csrf() }}<button class="btn btn-sm btn-danger" type="submit">Delete</button></form></div></figcaption></figure>{% endfor %}</div>
+    {% else %}<p class="muted">No photos yet.</p>{% endif %}
+    <div class="divider"></div><h3>Add a photo</h3>
+    <form method="post" action="{{ url_for('media.portfolio_add') }}" enctype="multipart/form-data">{{ csrf() }}
+      <div class="field"><label for="pf-photo">Photo</label><input class="input" id="pf-photo" type="file" name="photo" accept="image/jpeg,image/png,image/webp" required></div>
+      <div class="grid g2"><div class="field"><label for="pf-title">Title</label><input class="input" id="pf-title" name="title" maxlength="60" required placeholder="e.g. Kitchen sink repair"></div>
+        <div class="field"><label for="pf-desc">Description <span class="muted">(optional)</span></label><input class="input" id="pf-desc" name="description" maxlength="300"></div></div>
+      <button class="btn btn-primary" type="submit">{{ icon('plus') }} Add photo</button></form></section>{% endif %}
+
+  <section class="card" id="blocked"><h3>Blocked people</h3>
+    {% if blocked %}<div class="list">{% for b in blocked %}<div class="row between"><div><strong class="ink">{{ b.display_name }}</strong> <span class="badge b-muted">{{ b.role }}</span><div class="muted small">{{ b.reason }}</div></div>
+      <form method="post" action="{{ url_for('app.unblock') }}">{{ csrf() }}<input type="hidden" name="account_id" value="{{ b.account_id }}"><button class="btn btn-sm" type="submit">Unblock</button></form></div>{% endfor %}</div>
+    {% else %}<p class="muted mb-0">You haven't blocked anyone.</p>{% endif %}</section>
+
+  <section class="card" id="data"><h3>Your data</h3><p class="muted">Download a copy of the information we hold about you (profile, requests, jobs, messages and reviews).</p>
+    <form method="post" action="{{ url_for('app.export_data') }}">{{ csrf() }}<button class="btn" type="submit">{{ icon('file-text') }} Download my data</button></form></section>
+</div></div>
+{% endblock %}

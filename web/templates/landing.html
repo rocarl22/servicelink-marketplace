@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import provider_card, empty %}
+{% block content %}
+<section class="hero">
+  <div class="container">
+    <p class="eyebrow hero-eyebrow">Kenya's local services marketplace</p>
+    <h1>Trusted help, a tap away.</h1>
+    <p class="lead">Find a plumber, electrician, cleaner or stylist near you. Agree the job, track the work, and review it - all in one place.</p>
+    <form class="searchbar" action="{{ url_for('public.providers') }}" method="get" role="search">
+      <input class="input" type="search" name="q" placeholder="What do you need? e.g. plumbing" aria-label="Service" maxlength="60">
+      <select class="select" name="area" aria-label="Area"><option value="">Anywhere in Kenya</option>
+        {% for a in ['Nairobi CBD','Westlands','Rongai','Kitengela','Athi River','Kiambu'] %}<option>{{ a }}</option>{% endfor %}</select>
+      <button class="btn btn-primary" type="submit">{{ icon('search') }} Search</button>
+    </form>
+    <div class="chips">{% for c in ['Plumbing','Electrical','Cleaning','Painting','Hair','Photography'] %}
+      <a class="chip" href="{{ url_for('public.providers', q=c) }}">{{ c }}</a>{% endfor %}</div>
+  </div>
+</section>
+
+<section class="section"><div class="container grid g3">
+  <div class="feature"><span class="ico">{{ icon('lock') }}</span><div><h3>Private by design</h3><p>Phone numbers, emails and links are hidden in chat, so you can't be pulled into off-platform deals.</p></div></div>
+  <div class="feature"><span class="ico">{{ icon('star') }}</span><div><h3>Reviews from real jobs</h3><p>Only people who completed a job together can review each other.</p></div></div>
+  <div class="feature"><span class="ico">{{ icon('clock') }}</span><div><h3>See every step</h3><p>From accepted to on the way to done - a clear timeline both sides can see.</p></div></div>
+</div></section>
+
+<section class="section section-alt"><div class="container">
+  <p class="eyebrow">Browse by service</p><h2>What do you need done?</h2>
+  <div class="grid g4 mt">{% for fam, cats in categories.items() %}{% for c in cats %}
+    <a class="cat" href="{{ url_for('public.providers', q=c) }}"><span class="ico">{{ icon(category_icon(c)) }}</span>{{ c }}</a>{% endfor %}{% endfor %}</div>
+</div></section>
+
+<section class="section"><div class="container">
+  <p class="eyebrow">How it works</p><h2>Three simple steps</h2>
+  <div class="grid g3 mt">
+    <div class="step"><div class="num">1</div><h3>Describe the job</h3><p>Pick a provider, or post an open request and let matching providers respond.</p></div>
+    <div class="step"><div class="num">2</div><h3>Agree and track</h3><p>Your provider accepts, you agree the price, and follow progress step by step.</p></div>
+    <div class="step"><div class="num">3</div><h3>Confirm and review</h3><p>Confirm the work is done, then leave an honest review to help others.</p></div>
+  </div>
+</div></section>
+
+<section class="section section-alt"><div class="container">
+  <div class="split"><div><p class="eyebrow">For providers</p><h2>Grow your business with steady, local work</h2>
+      <p>Create a profile, list your services and get requests from clients in your area. Accept the jobs you want and build a reputation through completed work.</p>
+      <a class="btn btn-primary" href="{{ url_for('auth.signup', role='provider') }}">Join as a provider</a></div>
+    <img src="{{ url_for('static', filename='img/plumber.jpg') }}" alt="A plumber fixing a sink" width="1000" height="666" loading="lazy"></div>
+  <div class="split mt-lg"><img src="{{ url_for('static', filename='img/client-laptop.jpg') }}" alt="A person booking a service on a laptop" width="1000" height="666" loading="lazy">
+    <div><p class="eyebrow">For clients</p><h2>Get it fixed without the guesswork</h2>
+      <p>Compare providers by area, services and past work, message safely inside the platform, and keep a record of every job.</p>
+      <a class="btn btn-primary" href="{{ url_for('auth.signup', role='client') }}">Post a request</a></div></div>
+</div></section>
+
+<section class="section"><div class="container">
+  <div class="page-head"><div><p class="eyebrow">Available now</p><h2 class="mb-0">Featured providers</h2></div>
+    <a class="btn" href="{{ url_for('public.providers') }}">See all</a></div>
+  {% if featured %}<div class="grid g3">{% for p in featured %}{{ provider_card(p) }}{% endfor %}</div>
+  {% else %}<div class="card">{% call empty('users', 'Providers are joining soon', 'Be one of the first providers in your area.') %}<a class="btn btn-primary" href="{{ url_for('auth.signup', role='provider') }}">Create a provider profile</a>{% endcall %}</div>{% endif %}
+</div></section>
+
+<section class="section"><div class="container"><div class="cta"><h2>Ready to get started?</h2><p>It takes about a minute to create your account.</p>
+  <div class="row center"><a class="btn btn-primary btn-lg" href="{{ url_for('auth.signup') }}">Create a free account</a></div></div></div></section>
+{% endblock %}

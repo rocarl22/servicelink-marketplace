@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, job_row, provider_card, state_badge, empty with context %}
+{% block title %}Dashboard - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="container">
+  {% if needs_verify %}<div class="banner"><div><strong class="ink">Verify your phone number</strong><div class="small muted">You need this to {{ 'send requests' if current_account.role == 'client' else 'accept jobs' }}. It takes a minute.</div></div><a class="btn btn-primary" href="{{ url_for('auth.verify_phone') }}">Verify now</a></div>{% endif %}
+  <div class="page-head"><div><p class="muted mb-0">{{ 'Welcome back' }}</p><h1>Hello, {{ (current_account.display_name or current_account.full_name).split(' ')[0] }}</h1></div>
+    {% if current_account.role == 'client' %}<a class="btn btn-primary" href="{{ url_for('app.request_new') }}">{{ icon('plus') }} New request</a>
+    {% else %}<a class="btn btn-primary" href="{{ url_for('app.requests_available') }}">{{ icon('briefcase') }} View requests</a>{% endif %}</div>
+
+  {% if current_account.role == 'provider' %}{% set av = availability|avail %}
+  <section class="card mb-form"><div class="row between"><div><h3 class="mb-0">Your availability</h3><div class="small muted">Clients see this on your card and profile.</div></div><span class="badge b-{{ av[1] }}">{{ av[0] }}</span></div>
+    <form method="post" action="{{ url_for('app.availability_set') }}" class="grid g4 mt">{{ csrf() }}
+      <div class="field mb-0"><label for="av-mode">Status</label><select class="select" id="av-mode" name="mode">
+        {% for k, label in (('available_now','Available now'),('available_at','Available from...'),('busy_until','Busy until...'),('unavailable','Unavailable')) %}<option value="{{ k }}" {{ 'selected' if availability.mode == k }}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="field mb-0"><label for="av-when">When <span class="muted">(if timed)</span></label><input class="input" id="av-when" name="when" maxlength="60" value="{{ availability.available_at }}" placeholder="e.g. 3pm today"></div>
+      <div class="field mb-0"><label for="av-note">Note <span class="muted">(optional)</span></label><input class="input" id="av-note" name="note" maxlength="120" value="{{ availability.note }}"></div>
+      <div class="field mb-0 align-end"><button class="btn btn-primary btn-block" type="submit">Save</button></div></form>
+    {% if availability.mode == 'on_job' %}<p class="hint mb-0">You're shown as "On a job" automatically while you have an active job.</p>{% endif %}</section>{% endif %}
+  <div class="grid g4">
+    <div class="card stat"><span class="ico">{{ icon('briefcase') }}</span><div><b>{{ active|length }}</b><span>Active jobs</span></div></div>
+    <div class="card stat"><span class="ico">{{ icon('circle-check') }}</span><div><b>{{ summary.completed_jobs }}</b><span>Completed</span></div></div>
+    {% if current_account.role == 'provider' %}
+      <div class="card stat"><span class="ico">{{ icon('bell') }}</span><div><b>{{ incoming|length }}</b><span>New requests</span></div></div>
+      <div class="card stat"><span class="ico">{{ icon('star') }}</span><div><b>{{ '%.1f'|format(summary.avg_stars or 0) }}</b><span>{{ summary.review_count }} review{{ '' if summary.review_count == 1 else 's' }}</span></div></div>
+    {% else %}
+      <div class="card stat"><span class="ico">{{ icon('clock') }}</span><div><b>{{ my_requests|length }}</b><span>Pending requests</span></div></div>
+      <div class="card stat"><span class="ico">{{ icon('star') }}</span><div><b>{{ summary.review_count }}</b><span>Reviews</span></div></div>
+    {% endif %}
+  </div>
+
+  <div class="grid g2 mt">
+    <section class="card"><div class="row between"><h3>Active jobs</h3><a class="small" href="{{ url_for('app.jobs_list') }}">View all</a></div>
+      {% if active %}<div class="stack">{% for j in active %}{{ job_row(j) }}{% endfor %}</div>
+      {% else %}{% call empty('briefcase', 'No active jobs', 'Jobs appear here once a request is accepted.') %}{% endcall %}{% endif %}</section>
+    {% if current_account.role == 'provider' %}
+    <section class="card"><div class="row between"><h3>New requests</h3><a class="small" href="{{ url_for('app.requests_available') }}">View all</a></div>
+      {% if incoming %}<div class="list">{% for r in incoming[:4] %}<div class="row between"><div><strong class="ink">{{ r.category }}</strong> <span class="muted">from {{ r.client_name }}</span>
+        <div class="muted small">{{ icon('map-pin') }} {{ r.area }} &middot; {{ r.created_at|ago }}</div></div>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('app.requests_available') }}">Review</a></div>{% endfor %}</div>
+      {% else %}{% call empty('bell', 'No new requests', 'Keep your services and availability up to date to get matched.') %}<a class="btn" href="{{ url_for('app.settings') }}#services">Manage services</a>{% endcall %}{% endif %}</section>
+    {% else %}
+    <section class="card"><div class="row between"><h3>Your pending requests</h3><a class="small" href="{{ url_for('app.requests_list') }}">View all</a></div>
+      {% if my_requests %}<div class="list">{% for r in my_requests[:4] %}<div class="row between"><div><strong class="ink">{{ r.category }}</strong>
+        <div class="muted small">{{ icon('map-pin') }} {{ r.area }} &middot; {{ r.created_at|ago }}{% if r.provider_name %} &middot; to {{ r.provider_name }}{% endif %}</div></div>{{ state_badge(r.status) }}</div>{% endfor %}</div>
+      {% else %}{% call empty('search', 'No pending requests', 'Find a provider or post an open request.') %}<a class="btn btn-primary" href="{{ url_for('public.providers') }}">Find providers</a>{% endcall %}{% endif %}</section>
+    {% endif %}
+  </div>
+
+  {% if current_account.role == 'client' and featured %}
+  <section class="mt-lg"><div class="page-head"><h2 class="mb-0">Providers near you</h2><a class="btn btn-sm" href="{{ url_for('public.providers') }}">Browse all</a></div>
+    <div class="grid g4">{% for p in featured %}{{ provider_card(p) }}{% endfor %}</div></section>{% endif %}
+  {% if recent %}<section class="card mt-lg"><h3>Recent jobs</h3><div class="stack">{% for j in recent %}{{ job_row(j) }}{% endfor %}</div></section>{% endif %}
+</div></div>
+{% endblock %}

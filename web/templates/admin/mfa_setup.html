@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}{% from "_macros.html" import csrf %}
+{% block title %}Set up two-step sign-in{% endblock %}
+{% block content %}<div class="auth-wrap"><div class="narrow"><div class="card auth-card">
+  <h1>Set up two-step sign-in</h1>
+  <p class="muted">Admin accounts must use an authenticator app (Google Authenticator, Microsoft Authenticator, Authy, 1Password...).</p>
+  <ol class="stack"><li>In the app, choose <strong>Add account</strong> then <strong>Enter a setup key</strong>.</li>
+    <li>Account name: <strong>{{ g.admin.username }}</strong>. Type this key:<div class="keybox">{{ secret }}</div></li>
+    <li>Type the 6-digit code the app shows to finish.</li></ol>
+  <details class="small muted"><summary>Setup link (for password managers)</summary><code class="wrap">{{ uri }}</code></details>
+  <form method="post" action="{{ url_for('admin.mfa_setup') }}" class="mt">{{ csrf() }}
+    <div class="field"><label for="code">6-digit code</label><input class="input code-input" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" required></div>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Turn on and continue</button></form>
+</div></div></div>{% endblock %}

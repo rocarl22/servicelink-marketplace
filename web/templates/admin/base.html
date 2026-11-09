@@ -1,0 +1,28 @@
+{% from "_macros.html" import csrf %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Admin{% endblock %} - ServiceLink Admin</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="admin">
+<header class="nav"><div class="container nav-inner">
+  <a class="brand" href="{{ url_for('admin.dashboard') }}"><span class="brand-mark">{{ icon('shield-check') }}</span>Admin</a>
+  {% if admin_nav %}
+  <nav class="nav-links" aria-label="Admin">
+    <a href="{{ url_for('admin.dashboard') }}">Overview</a><a href="{{ url_for('admin.accounts') }}">Accounts</a>
+    <a href="{{ url_for('admin.disputes') }}">Disputes</a><a href="{{ url_for('admin.reports') }}">Reports</a>
+    <a href="{{ url_for('admin.audit') }}">Audit</a><a href="{{ url_for('admin.me') }}">My account</a>
+  </nav>
+  <div class="nav-right"><span class="small muted">{{ g.admin.username }} ({{ g.admin.role }})</span>
+    <form method="post" action="{{ url_for('admin.signout') }}">{{ csrf() }}<button class="btn btn-sm" type="submit">Sign out</button></form></div>
+  {% endif %}
+</div></header>
+{% with msgs = get_flashed_messages(with_categories=true) %}{% if msgs %}
+<div class="flashes" role="status">{% for cat, m in msgs %}<div class="flash flash-{{ 'ok' if cat == 'ok' else 'error' }}">{{ icon('circle-check' if cat == 'ok' else 'triangle-alert') }}<span>{{ m }}</span><button type="button" aria-label="Dismiss">{{ icon('x') }}</button></div>{% endfor %}</div>{% endif %}{% endwith %}
+<main>{% block content %}{% endblock %}</main>
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body></html>

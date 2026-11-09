@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% from "_macros.html" import csrf %}
+{% block title %}Verify your phone - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}<div class="auth-wrap"><div class="narrow"><div class="card auth-card">
+  <h1>Verify your phone</h1>
+  {% if sms_on %}
+  <p class="muted">We'll text a 6-digit code to <strong class="ink">{{ masked }}</strong> to confirm it's really you. This keeps clients and providers safe.</p>
+  <form method="post" action="{{ url_for('auth.verify_phone_send') }}">{{ csrf() }}<input type="hidden" name="next" value="{{ next }}"><button class="btn btn-block" type="submit">{{ icon('message-circle') }} Text me a code</button></form>
+  <div class="divider"></div>
+  <form method="post" action="{{ url_for('auth.verify_phone') }}">{{ csrf() }}<input type="hidden" name="next" value="{{ next }}">
+    <div class="field"><label for="code">Enter the code</label><input class="input code-input" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" required></div>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Verify</button></form>
+  <p class="hint mt">Codes last 10 minutes. You can ask for a new one after a minute.</p>
+  {% else %}<p class="muted">Phone verification isn't switched on for this site yet.</p>{% endif %}
+</div></div></div>{% endblock %}

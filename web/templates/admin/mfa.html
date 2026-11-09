@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}{% from "_macros.html" import csrf %}
+{% block title %}Enter code{% endblock %}
+{% block content %}<div class="auth-wrap"><div class="narrow"><div class="card auth-card">
+  <h1>Enter your code</h1><p class="muted">Open your authenticator app and type the 6-digit code for <strong>{{ g.admin.username }}</strong>.</p>
+  <form method="post" action="{{ url_for('admin.mfa') }}">{{ csrf() }}
+    <div class="field"><label for="code">6-digit code</label><input class="input code-input" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" required autofocus></div>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Verify</button></form>
+  <p class="hint mt">Lost your device? Another administrator or the server owner can reset it (<code>python -m web.admin_cli reset-mfa</code>).</p>
+</div></div></div>{% endblock %}

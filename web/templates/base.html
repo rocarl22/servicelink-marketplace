@@ -1,0 +1,84 @@
+{% from "_macros.html" import csrf %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}ServiceLink - trusted local services{% endblock %}</title>
+  <meta name="description" content="{% block desc %}Find trusted local service providers in Kenya, agree the job, track the work and review it.{% endblock %}">
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="robots" content="{% block robots %}index,follow{% endblock %}">
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <link rel="preload" href="{{ url_for('static', filename='fonts/Inter-Regular.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="{{ 'has-tabbar' if current_account else '' }}">
+<a class="skip" href="#main">Skip to content</a>
+{% set ep = request.endpoint or '' %}
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="{{ url_for('public.landing') }}" aria-label="ServiceLink home"><span class="brand-mark">{{ icon('wrench') }}</span>ServiceLink</a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="{{ url_for('public.providers') }}" class="{{ 'active' if ep.startswith('public.provider') }}">Find providers</a>
+      {% if current_account %}
+        <a href="{{ url_for('app.dashboard') }}" class="{{ 'active' if ep == 'app.dashboard' }}">Dashboard</a>
+        <a href="{{ url_for('app.jobs_list') }}" class="{{ 'active' if ep.startswith('app.job') }}">Jobs</a>
+        {% if current_account.role == 'client' %}<a href="{{ url_for('app.requests_list') }}" class="{{ 'active' if ep == 'app.requests_list' }}">My requests</a>
+        {% else %}<a href="{{ url_for('app.requests_available') }}" class="{{ 'active' if ep == 'app.requests_available' }}">Requests</a>{% endif %}
+      {% endif %}
+      <a href="{{ url_for('public.safety') }}" class="{{ 'active' if ep == 'public.safety' }}">Safety</a>
+      {% if not current_account %}<a class="only-mobile" href="{{ url_for('auth.signin') }}">Sign in</a>{% endif %}
+    </nav>
+    <div class="nav-right">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <span class="sheet-theme-light">{{ icon('moon') }}</span><span class="sheet-theme-dark">{{ icon('sun') }}</span></button>
+      {% if current_account %}
+        <a class="icon-btn" href="{{ url_for('app.messages') }}" aria-label="Messages">{{ icon('message-circle') }}{% if unread_messages %}<span class="dot">{{ unread_messages }}</span>{% endif %}</a>
+        <a class="icon-btn" href="{{ url_for('app.notifications_page') }}" aria-label="Notifications">{{ icon('bell') }}{% if unread_notifications %}<span class="dot">{{ unread_notifications }}</span>{% endif %}</a>
+        <div class="menu">
+          <button class="icon-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+            {% set mine = photo_url(current_account.account_id, current_account.work_photo_path) %}<span class="avatar avatar-sm">{% if mine %}<img src="{{ mine }}" alt="">{% else %}{{ (current_account.display_name or current_account.full_name)|initials }}{% endif %}</span></button>
+          <div class="menu-panel" role="menu">
+            <div class="small muted menu-head">Signed in as<br><strong>{{ current_account.display_name or current_account.full_name }}</strong> ({{ current_account.role }})</div>
+            <a href="{{ url_for('app.settings') }}">{{ icon('settings') }} Settings</a>
+            {% if current_account.role == 'client' %}<a href="{{ url_for('app.saved') }}">{{ icon('heart') }} Saved providers</a>{% endif %}
+            <a href="{{ url_for('app.reviews_page') }}">{{ icon('star') }} Reviews</a>
+            <a href="{{ url_for('app.disputes_page') }}">{{ icon('shield') }} Dispute messages</a>
+            <form method="post" action="{{ url_for('auth.signout') }}">{{ csrf() }}<button type="submit">{{ icon('log-out') }} Sign out</button></form>
+          </div>
+        </div>
+      {% else %}
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('auth.signin') }}">Sign in</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('auth.signup') }}">Get started</a>
+      {% endif %}
+      <button class="icon-btn burger" id="burger" type="button" aria-label="Menu" aria-expanded="false">{{ icon('chevron-down') }}</button>
+    </div>
+  </div>
+</header>
+
+{% with msgs = get_flashed_messages(with_categories=true) %}{% if msgs %}
+<div class="flashes" role="status" aria-live="polite">
+  {% for cat, m in msgs %}<div class="flash flash-{{ 'ok' if cat == 'ok' else 'error' }}">{{ icon('circle-check' if cat == 'ok' else 'triangle-alert') }}<span>{{ m }}</span><button type="button" aria-label="Dismiss">{{ icon('x') }}</button></div>{% endfor %}
+</div>{% endif %}{% endwith %}
+
+<main id="main">{% block content %}{% endblock %}</main>
+
+<footer class="footer"><div class="container footer-grid">
+  <div><a class="brand" href="{{ url_for('public.landing') }}"><span class="brand-mark">{{ icon('wrench') }}</span>ServiceLink</a>
+    <p class="mt small">Trusted local services across Kenya.<br>Empowering today, building tomorrow.</p></div>
+  <div class="stack small"><strong class="ink">Platform</strong><br><a href="{{ url_for('public.providers') }}">Find providers</a><br><a href="{{ url_for('auth.signup') }}">Join as a provider</a><br><a href="{{ url_for('public.safety') }}">Safety</a></div>
+  <div class="stack small"><strong class="ink">Legal</strong><br><a href="{{ url_for('public.legal') }}">Terms &amp; privacy</a><br><span>&copy; {{ now_year }} ServiceLink</span></div>
+</div></footer>
+
+{% if current_account %}
+<nav class="tabbar" aria-label="Mobile">
+  <a href="{{ url_for('app.dashboard') }}" class="{{ 'active' if ep == 'app.dashboard' }}">{{ icon('house') }}Home</a>
+  <a href="{{ url_for('public.providers') }}" class="{{ 'active' if ep.startswith('public.provider') }}">{{ icon('search') }}Find</a>
+  <a href="{{ url_for('app.jobs_list') }}" class="{{ 'active' if ep.startswith('app.job') }}">{{ icon('briefcase') }}Jobs</a>
+  <a href="{{ url_for('app.messages') }}" class="{{ 'active' if ep in ('app.messages','app.thread') }}">{{ icon('message-circle') }}Chats{% if unread_messages %}<span class="dot">{{ unread_messages }}</span>{% endif %}</a>
+  <a href="{{ url_for('app.settings') }}" class="{{ 'active' if ep == 'app.settings' }}">{{ icon('user') }}Me</a>
+</nav>
+{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>

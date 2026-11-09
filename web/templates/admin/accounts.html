@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% block title %}Accounts{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="container">
+  <div class="page-head"><h1>Accounts</h1></div>
+  <form class="card card-flat mb-form" method="get" action="{{ url_for('admin.accounts') }}"><div class="grid g4">
+    <div class="field mb-0 span2"><label for="q">Name or phone</label><input class="input" id="q" name="q" value="{{ q }}" maxlength="60"></div>
+    <div class="field mb-0"><label for="role">Type</label><select class="select" id="role" name="role"><option value="">All</option><option value="client" {{ 'selected' if role == 'client' }}>Clients</option><option value="provider" {{ 'selected' if role == 'provider' }}>Providers</option></select></div>
+    <div class="field mb-0 align-end"><button class="btn btn-primary btn-block" type="submit">Search</button></div></div></form>
+  <div class="card"><table class="t"><thead><tr><th>Name</th><th>Type</th><th>Phone</th><th>Status</th><th>Jobs</th><th>Reports</th></tr></thead><tbody>
+    {% for a in items %}<tr><td><a href="{{ url_for('admin.account_detail', account_id=a.account_id) }}">{{ a.display_name or a.full_name }}</a></td><td>{{ a.role }}</td><td>{{ a.phone }}</td>
+      <td><span class="badge b-{{ 'ok' if a.account_status == 'active' else 'warn' }}">{{ a.account_status|replace('_',' ') }}</span></td><td>{{ a.completed_jobs }}</td><td>{{ a.open_reports }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No accounts found.</td></tr>{% endfor %}</tbody></table></div>
+</div></div>{% endblock %}

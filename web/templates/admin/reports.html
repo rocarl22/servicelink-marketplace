@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}{% from "_macros.html" import csrf %}
+{% block title %}Reports{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="container"><div class="page-head"><h1>Open reports</h1></div>
+  <div class="stack">{% for r in items %}<div class="card"><div class="row between"><div><strong class="ink">{{ r.reported_name }}</strong> <span class="badge b-muted">{{ r.reported_role }}</span> <span class="badge b-warn">{{ r.kind|replace('_',' ') }}</span>
+    <div class="muted small">reported by {{ r.reporter_name }} ({{ r.reporter_role }}) &middot; {{ r.created_at|ago }}</div></div>
+    <a class="btn btn-sm" href="{{ url_for('admin.account_detail', account_id=r.reported_account_id) }}">View account</a></div>
+    <p class="mt">{{ (r.reason or r.notes or '')|nl2br }}</p>
+    <form method="post" action="{{ url_for('admin.report_dismiss', report_id=r.report_id) }}" class="row">{{ csrf() }}<input class="input grow" name="reason" required minlength="10" maxlength="500" placeholder="Why is this being dismissed?" aria-label="Reason"><button class="btn" type="submit">Dismiss</button></form></div>
+  {% else %}<div class="card"><p class="muted mb-0">No open reports.</p></div>{% endfor %}</div></div></div>{% endblock %}

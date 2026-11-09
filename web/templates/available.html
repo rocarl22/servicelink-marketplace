@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, empty %}
+{% block title %}Requests - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid">
+  <div class="page-head"><h1>Requests for you</h1></div>
+  {% if items %}<div class="stack">{% for r in items %}
+    <div class="card"><div class="row between"><div><h3 class="mb-0">{{ r.category }}</h3>
+      <div class="muted small">from {{ r.client_name }} &middot; {{ icon('map-pin') }} {{ r.area }}{% if r.preferred_time %} &middot; {{ r.preferred_time }}{% endif %} &middot; {{ r.created_at|ago }}</div></div>
+      <span class="badge b-{{ 'primary' if r.mode == 'direct' else 'info' }}">{{ 'Sent to you' if r.mode == 'direct' else 'Open request' }}</span></div>
+      <p class="mt">{{ r.description|nl2br }}</p>
+      <div class="actions">
+        <form method="post" action="{{ url_for('app.request_accept', request_id=r.request_id) }}">{{ csrf() }}<button class="btn btn-primary" type="submit">{{ icon('check') }} Accept job</button></form>
+        {% if r.mode == 'direct' %}<form method="post" action="{{ url_for('app.request_decline', request_id=r.request_id) }}" data-confirm="Decline this request?">{{ csrf() }}<button class="btn" type="submit">Decline</button></form>{% endif %}
+      </div></div>{% endfor %}</div>
+  {% else %}<div class="card">{% call empty('bell', 'No requests right now', 'New requests in your area and services appear here.') %}<a class="btn" href="{{ url_for('app.settings') }}#services">Manage your services</a>{% endcall %}</div>{% endif %}
+</div></div>
+{% endblock %}

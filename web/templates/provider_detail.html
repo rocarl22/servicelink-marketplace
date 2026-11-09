@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import avatar, person, stars, csrf, empty %}
+{% block title %}{{ p.display_name or p.full_name }} - ServiceLink{% endblock %}
+{% block content %}
+{% set av = p.availability|avail %}
+<div class="page"><div class="container grid detail-grid">
+  <div class="stack">
+    <div class="card"><div class="row">{{ person(p.account_id, p.display_name or p.full_name, p.work_photo_path, 'avatar-lg') }}
+      <div class="grow"><h1 class="mb-0 h-lg">{{ p.display_name or p.full_name }}</h1>
+        <div class="muted">{{ icon('map-pin') }} {{ p.area }} &middot; {{ p.service_family|title }} services &middot; <a href="https://www.openstreetmap.org/search?query={{ (p.area ~ ', Kenya')|urlencode }}" target="_blank" rel="noopener noreferrer">View area on map</a></div>
+        <div class="row mt-sm"><span class="rating">{{ stars(p.avg_stars) }} {{ '%.1f'|format(p.avg_stars or 0) }} ({{ p.review_count }})</span>
+          <span class="badge b-{{ av[1] }}">{{ av[0] }}</span>{% if p.verified %}<span class="badge b-ok">{{ icon('shield-check') }} Phone verified</span>{% endif %}<span class="badge b-muted">{{ p.completed_jobs }} completed</span></div></div></div>
+      {% if p.bio %}<p class="mt">{{ p.bio|nl2br }}</p>{% endif %}</div>
+    <div class="card"><h3>Services</h3>
+      {% if p.services %}<div class="list">{% for s in p.services if s.active %}
+        <div class="row between"><div><strong class="ink">{{ s.title }}</strong> <span class="badge b-primary">{{ s.category }}</span>
+          {% if s.description %}<div class="muted small">{{ s.description }}</div>{% endif %}</div>
+          <div class="ink">{{ s.rate_text or 'Price on request' }}</div></div>{% endfor %}</div>
+      {% else %}<p class="muted mb-0">This provider hasn't listed services yet.</p>{% endif %}</div>
+    {% if portfolio %}<div class="card"><h3>Work samples</h3><div class="gallery">{% for it in portfolio %}
+      <figure><a href="/media/portfolio/{{ it.item_id }}" target="_blank" rel="noopener"><img src="/media/portfolio/{{ it.item_id }}" alt="{{ it.title }}" loading="lazy"></a>
+        <figcaption><strong class="ink">{{ it.title }}</strong>{% if it.description %}<div class="small muted">{{ it.description }}</div>{% endif %}</figcaption></figure>{% endfor %}</div></div>{% endif %}
+    <div class="card"><h3>Reviews</h3>
+      {% if p.reviews %}<div class="list">{% for r in p.reviews %}<div><div class="row between"><strong class="ink">{{ r.reviewer_name or 'Client' }}</strong>{{ stars(r.stars) }}</div>
+        {% if r.comment %}<p class="mb-0">{{ r.comment|nl2br }}</p>{% endif %}</div>{% endfor %}</div>
+      {% else %}<p class="muted mb-0">No reviews yet. Reviews appear after completed jobs.</p>{% endif %}</div>
+  </div>
+  <aside class="stack sticky">
+    <div class="card"><h3>Work with {{ (p.display_name or p.full_name).split(' ')[0] }}</h3>
+      {% if not current_account %}<a class="btn btn-primary btn-block" href="{{ url_for('auth.signin', next=request.path) }}">Sign in to send a request</a>
+      {% elif current_account.role == 'client' %}
+        <a class="btn btn-primary btn-block" href="{{ url_for('app.request_new', provider=p.account_id) }}">{{ icon('message-circle') }} Request this provider</a>
+        <form method="post" action="{{ url_for('app.toggle_save', provider_id=p.account_id) }}" class="mt">{{ csrf() }}
+          <button class="btn btn-block" type="submit">{{ icon('heart') }} {{ 'Remove from saved' if saved else 'Save provider' }}</button></form>
+      {% else %}<p class="muted mb-0">Providers can't send requests.</p>{% endif %}
+      <p class="small muted mt mb-0">{{ icon('lock') }} Contact details stay private. You'll message inside ServiceLink.</p></div>
+  </aside>
+</div></div>
+{% endblock %}

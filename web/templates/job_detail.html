@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, state_badge, stars, avatar %}
+{% block title %}{{ job.category }} job - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+{% set other = job.client_name if is_provider else job.provider_name %}
+{% set price = (job.agreed_price_minor|kes) or job.agreed_price_text %}
+<div class="page"><div class="container grid detail-grid" data-live="{{ 20 if not terminal or job.current_state == 'disputed' else 0 }}">
+  <div class="stack">
+    <div class="card"><div class="row between"><div><h1 class="h-lg mb-0">{{ job.category }}</h1>
+        <div class="muted">{{ icon('map-pin') }} {{ job.area }} &middot; started {{ job.created_at|dt('%d %b %Y') }}</div></div>{{ state_badge(job.current_state) }}</div>
+      <p class="mt mb-0">{{ job.description|nl2br }}</p></div>
+
+    {% if actions and not terminal %}<div class="card card-accent"><h3>Your next step</h3><div class="actions">
+      {% for action, label in actions %}<form method="post" action="{{ url_for('app.job_advance', job_id=job.job_id) }}">{{ csrf() }}<input type="hidden" name="action" value="{{ action }}">
+        <button class="btn btn-primary btn-lg" type="submit">{{ icon('circle-check') }} {{ label }}</button></form>{% endfor %}</div></div>
+    {% elif waiting %}<div class="card waiting">{{ icon('clock') }}<div><strong class="ink">{{ waiting }}</strong>{% if job.current_state == 'done' and job.hard_timeout_deadline %}<div class="small muted">If nobody responds, it completes automatically after {{ job.hard_timeout_deadline|dt }}.</div>{% elif job.current_state == 'started' and job.mutual_completion_deadline %}<div class="small muted">If there's no reply, the start is confirmed automatically after {{ job.mutual_completion_deadline|dt }}.</div>{% endif %}</div></div>{% endif %}
+
+    {% if job.current_state == 'disputed' %}<div class="card card-bad"><h3>{{ icon('triangle-alert') }} A dispute is open</h3>
+      {% if dispute %}<p><strong class="ink">{{ dispute.title }}</strong><br><span class="muted small">Opened {{ dispute.created_at|ago }}{% if i_raised %} by you{% endif %}</span></p>{% endif %}
+      <p class="small muted">An administrator is reviewing this job. You can follow it in <a href="{{ url_for('app.disputes_page') }}">dispute messages</a>.</p>
+      <div class="actions">{% if i_raised %}<form method="post" action="{{ url_for('app.dispute_withdraw', job_id=job.job_id) }}" data-confirm="Withdraw your dispute? The job goes back to where it was.">{{ csrf() }}<button class="btn" type="submit">Withdraw dispute</button></form>
+        {% else %}<form method="post" action="{{ url_for('app.dispute_accept', job_id=job.job_id) }}" data-confirm="Accept this dispute? The job will be cancelled.">{{ csrf() }}<button class="btn btn-danger" type="submit">Accept dispute</button></form>{% endif %}</div></div>{% endif %}
+
+    <div class="card"><h3>Price</h3>
+      <div class="price">{{ price or 'Not agreed yet' }}</div>
+      {% if is_provider and not terminal %}<form method="post" action="{{ url_for('app.job_price', job_id=job.job_id) }}" class="row mt">{{ csrf() }}
+        <input class="input grow" name="price" maxlength="60" placeholder="e.g. KSh 2,500" aria-label="Agreed price" required><button class="btn btn-primary" type="submit">Set price</button></form>
+        <p class="hint">Enter a clear amount like <em>KSh 2,500</em>. The client sees it in chat.</p>
+      {% elif not price and not terminal %}<p class="muted small mb-0">Your provider will set the price here. Discuss it in messages first.</p>{% endif %}</div>
+
+    <div class="card"><h3>Job progress</h3>
+      <ol class="stepper">{% for st in stages %}
+        <li class="{{ 'done' if st.done else '' }} {{ 'current' if st.current else '' }} {{ 'bad' if st.kind == 'bad' else '' }}">
+          <span class="dot-mark" aria-hidden="true">{% if st.done %}{{ icon('triangle-alert' if st.kind == 'bad' else 'check') }}{% endif %}</span>
+          <div><strong class="step-label">{{ st.label }}</strong>{% if st.current %} <span class="badge b-primary">Next</span>{% endif %}
+            {% if st.time %}<div class="muted small">{{ st.time|dt }}{% if st.actor %} &middot; {{ st.actor }}{% endif %}</div>{% endif %}
+            {% if st.note %}<div class="small">{{ st.note }}</div>{% endif %}</div></li>{% endfor %}</ol></div>
+
+    {% if my_review %}<div class="card"><h3>Your review of {{ other }}</h3><div class="row between"><span>{{ stars(my_review.stars) }}</span><span class="muted small">{{ my_review.created_at|ago }}</span></div>
+      {% if my_review.comment %}<p class="mt">{{ my_review.comment|nl2br }}</p>{% endif %}
+      {% if can_edit_review %}<details><summary class="small">Edit my review</summary>
+        <form method="post" action="{{ url_for('app.job_review_edit', job_id=job.job_id) }}" class="mt">{{ csrf() }}
+          <div class="star-pick field">{% for i in range(5, 0, -1) %}<label><input type="radio" name="stars" value="{{ i }}" {{ 'checked' if my_review.stars == i }}> {{ i }} {{ icon('star') }}</label>{% endfor %}</div>
+          <div class="field"><textarea class="textarea" name="comment" maxlength="600" aria-label="Comment">{{ my_review.comment }}</textarea></div>
+          <button class="btn btn-primary btn-sm" type="submit">Save changes</button></form></details>
+      {% else %}<p class="hint mb-0">Reviews can be edited for 7 days.</p>{% endif %}</div>
+    {% elif can_review %}<div class="card"><h3>Leave a review for {{ other }}</h3>
+      <form method="post" action="{{ url_for('app.job_review', job_id=job.job_id) }}">{{ csrf() }}
+        <fieldset class="field fieldset-plain"><legend class="sr-label">Rating</legend><div class="star-pick">
+          {% for i in range(5, 0, -1) %}<label><input type="radio" name="stars" value="{{ i }}" {{ 'required' if i == 5 }}> {{ i }} {{ icon('star') }}</label>{% endfor %}</div></fieldset>
+        <div class="field"><label for="comment">Comment <span class="muted">(optional)</span></label><textarea class="textarea" id="comment" name="comment" maxlength="600"></textarea></div>
+        <button class="btn btn-primary" type="submit">Submit review</button></form></div>{% endif %}
+    {% set others = job_reviews|rejectattr('reviewer_account_id', 'equalto', current_account.account_id)|list %}
+    {% if others %}<div class="card"><h3>Review from {{ other }}</h3><div class="list">{% for r in others %}<div><div class="row between"><strong class="ink">{{ r.reviewer_name }}</strong>{{ stars(r.stars) }}</div>{% if r.comment %}<p class="mb-0">{{ r.comment|nl2br }}</p>{% endif %}</div>{% endfor %}</div></div>{% endif %}
+  </div>
+
+  <aside class="stack sticky">
+    <div class="card"><h3>{{ 'Client' if is_provider else 'Provider' }}</h3><div class="row">{{ avatar(other) }}<div class="grow"><strong class="ink">{{ other }}</strong></div></div>
+      {% if conv_id %}<a class="btn btn-block mt" href="{{ url_for('app.thread', conversation_id=conv_id) }}">{{ icon('message-circle') }} Message</a>{% endif %}
+      {% if not is_provider %}<a class="btn btn-block mt-sm" href="{{ url_for('public.provider_detail', provider_id=job.provider_account_id) }}">View profile</a>{% endif %}</div>
+    {% if not terminal %}<div class="card"><h3>Report a problem</h3>
+      <form method="post" action="{{ url_for('app.job_dispute', job_id=job.job_id) }}">{{ csrf() }}
+        <div class="field"><label for="d-cat">What happened?</label><select class="select" id="d-cat" name="category" required><option value="">Choose...</option>{% for i in incidents %}<option>{{ i }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="d-desc">Details</label><textarea class="textarea" id="d-desc" name="description" required minlength="20" maxlength="1000" placeholder="At least 20 characters"></textarea></div>
+        <label class="check mb-form"><input type="checkbox" name="anonymous" value="1"><span class="small">Hide my name from the other person</span></label>
+        <button class="btn btn-block" type="submit">Send to an administrator</button></form></div>
+    <div class="card"><h3>Need to cancel?</h3>
+      <form method="post" action="{{ url_for('app.job_cancel', job_id=job.job_id) }}" data-confirm="Cancel this job? This can't be undone.">{{ csrf() }}
+        <div class="field"><label for="reason">Reason</label><input class="input" id="reason" name="reason" maxlength="300" required></div>
+        <button class="btn btn-danger btn-block" type="submit">Cancel job</button></form></div>{% endif %}
+    <div class="card"><h3>Not comfortable?</h3><p class="small muted">Blocking stops all contact. An administrator is told.</p>
+      <form method="post" action="{{ url_for('app.job_block', job_id=job.job_id) }}" data-confirm="Block {{ other }}? You will no longer see or contact each other.">{{ csrf() }}
+        <div class="field"><label for="b-reason">Reason</label><input class="input" id="b-reason" name="reason" required minlength="10" maxlength="300"></div>
+        <button class="btn btn-danger btn-block" type="submit">Block {{ other }}</button></form></div>
+  </aside>
+</div></div>
+{% endblock %}

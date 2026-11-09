@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}{% set admin_nav = true %}<div class="page"><div class="container">
+  <div class="page-head"><h1>Overview</h1></div>
+  <div class="grid g4">
+    <a class="card stat" href="{{ url_for('admin.disputes') }}"><span class="ico">{{ icon('triangle-alert') }}</span><div><b>{{ stats.open_disputes }}</b><span>Open disputes</span></div></a>
+    <a class="card stat" href="{{ url_for('admin.reports') }}"><span class="ico">{{ icon('shield') }}</span><div><b>{{ stats.open_reports }}</b><span>Open reports</span></div></a>
+    <a class="card stat" href="{{ url_for('admin.accounts') }}"><span class="ico">{{ icon('users') }}</span><div><b>{{ stats.total_accounts }}</b><span>Accounts</span></div></a>
+    <a class="card stat" href="{{ url_for('admin.accounts') }}"><span class="ico">{{ icon('lock') }}</span><div><b>{{ stats.restricted_accounts }}</b><span>Restricted</span></div></a>
+  </div>
+  <div class="card mt"><div class="row between"><h3>Recent admin activity</h3><a class="small" href="{{ url_for('admin.audit') }}">Full audit log</a></div>
+    <table class="t"><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Reason</th></tr></thead><tbody>
+    {% for a in actions %}<tr><td>{{ a.created_at|dt }}</td><td>{{ a.admin_username }}</td><td>{{ a.action_type|replace('_',' ') }}</td><td>{{ (a.reason or '')|truncate(70) }}</td></tr>{% endfor %}</tbody></table></div>
+</div></div>{% endblock %}

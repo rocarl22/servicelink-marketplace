@@ -1,0 +1,5 @@
+PySide6==6.11.2
+opencv-python==4.10.0.84
+Pillow>=10.4,<13
+bcrypt>=4.2,<6
+argon2-cffi>=23.1,<26

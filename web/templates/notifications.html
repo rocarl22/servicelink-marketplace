@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, empty %}
+{% block title %}Notifications - ServiceLink{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<div class="page"><div class="mid"><div class="page-head"><h1>Notifications</h1>
+  {% if items|selectattr('seen', 'false')|list %}<form method="post" action="{{ url_for('app.notifications_seen') }}">{{ csrf() }}<button class="btn btn-sm" type="submit">Mark all as read</button></form>{% endif %}</div>
+  <div class="card">{% if items %}<div class="list">{% for n in items %}
+    {% set href = url_for('app.thread', conversation_id=n.target_id) if n.target_type == 'conversation' else (url_for('app.job_detail', job_id=n.target_id) if n.target_type == 'job' else url_for('app.dashboard')) %}
+    <a class="convo" href="{{ href }}"><span class="stat"><span class="ico">{{ icon('message-circle' if n.kind == 'message' else 'bell') }}</span></span>
+      <div class="grow"><strong class="ink">{{ n.title }}</strong> {% if not n.seen %}<span class="badge b-primary">New</span>{% endif %}
+        <div class="muted small">{{ (n.body or '')|truncate(120) }}</div></div><span class="muted small">{{ n.created_at|ago }}</span></a>{% endfor %}</div>
+  {% else %}{% call empty('bell', 'You are all caught up') %}{% endcall %}{% endif %}</div></div></div>
+{% endblock %}
