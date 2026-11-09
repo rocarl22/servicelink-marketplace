@@ -28,3 +28,6 @@ data/*.log.*
 *.log
 .DS_Store
 .pytest_cache/
+
+# Local app data (database, uploads, generated secret key)
+/data/
